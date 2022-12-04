@@ -7,4 +7,6 @@ node_ip_address          = ""
 ssh_private_key_path     = ""
 root_volume_pool         = ""
 data_volume_pool         = ""
-
+minio_admin_username     = ""
+minio_admin_password     = ""
+minio_volumes            = ""
