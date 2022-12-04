@@ -1,0 +1,105 @@
+- name: Minio setup
+  hosts: all
+  remote_user: adamkoro
+  become: yes
+  tasks:
+    ###############
+    ## swap disk
+    ###############
+    #- name: Create a filesystem for swap
+    #  filesystem:
+    #    dev: /dev/vdb
+    #    fstype: swap
+    #    force: yes
+    #
+    #- name: Get swap disk UUID
+    #  command: blkid -s UUID -o value /dev/vdb
+    #  register: uuid_swap
+
+    ###############
+    ## datastore disk
+    ###############
+    - name: Create a filesystem for datastore
+      filesystem:
+        dev: /dev/vdb
+        fstype: xfs
+        force: yes
+
+    - name: Get swap disk UUID
+      command: blkid -s UUID -o value /dev/vdb
+      register: uuid_datastore
+
+    ###############
+    ## mount created disks
+    ###############
+    - name: Add disks to fstab
+      blockinfile:
+        path: /etc/fstab
+        state: present
+        block: |
+          UUID={{ uuid_datastore.stdout }} {{ minio_volumes }} xfs defaults 0 0
+
+    - name: Create minio group
+      group:
+        name: minio-user
+
+    - name: Create minio user
+      user:
+        name: minio-user
+        groups:
+          - minio-user
+
+    - name: Create directory for Minio data
+      file:
+        path: "{{ minio_volumes }}"
+        state: directory
+        owner: root
+        group: root
+        mode: 0755
+
+    #- name: Enable swap
+    #  command: swapon -a
+
+    - name: Mount disks
+      command: mount -a
+
+    - name: Change owner of Minio data
+      file:
+        path: "{{ minio_volumes }}"
+        owner: minio-user
+        group: minio-user
+        mode: 0755
+
+    ###############
+    ## minio install & setup
+    ###############
+    - name: Download Minio binary
+      get_url:
+        url: https://dl.min.io/server/minio/release/linux-amd64/minio
+        dest: /usr/local/bin/minio
+        owner: root
+        group: root
+        mode: 0750
+
+    - name: Copy Minio config
+      template:
+        src: "./minio.config.j2"
+        dest: "/etc/default/minio"
+        owner: minio-user
+        group: minio-user
+        mode: 0700
+
+    - name: Copy Minio service
+      template:
+        src: "./minio.service.j2"
+        dest: "/etc/systemd/system/minio.service"
+        owner: root
+        group: root
+        mode: 0755
+
+    - name: Start and enable Minio
+      systemd:
+        name: minio
+        daemon_reload: yes
+        state: started
+        enabled: yes

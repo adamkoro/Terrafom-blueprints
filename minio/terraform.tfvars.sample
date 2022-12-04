@@ -1,0 +1,10 @@
+cloud_init_username      = ""
+cloud_init_password      = ""
+cloud_init_sshkey        = ""
+cloud_init_nameserver    = ""
+cloud_init_search_domain = ""
+node_ip_address          = ""
+ssh_private_key_path     = ""
+root_volume_pool         = ""
+data_volume_pool         = ""
+
