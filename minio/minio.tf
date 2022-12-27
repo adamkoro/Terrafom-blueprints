@@ -29,7 +29,7 @@ resource "libvirt_domain" "minio" {
   }
 
   provisioner "local-exec" {
-    command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i '${var.node_ip_address},' --private-key ${var.ssh_private_key_path} setup.yaml --extra-vars 'minio_admin_username=${var.minio_admin_username} minio_admin_password=${var.minio_admin_password} minio_volumes=${var.minio_volumes}'"
+    command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i '${var.node_ip_address},' --private-key ${var.ssh_private_key_path} setup.yaml --extra-vars 'minio_admin_username=${var.minio_admin_username} minio_admin_password=${var.minio_admin_password} minio_volumes=${var.minio_volumes} minio_url=${var.server_fqdn}'"
   }
 }
 
@@ -57,7 +57,7 @@ resource "libvirt_cloudinit_disk" "cloud_init" {
   user_data      = <<EOF
 #cloud-config
 hostname: minio
-fqdn: minio.adamkoro.local
+fqdn: ${var.server_fqdn}
 manage_etc_hosts: true
 users:
   - name: ${var.cloud_init_username}
